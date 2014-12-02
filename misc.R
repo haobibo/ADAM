@@ -122,13 +122,18 @@ iClassSummary = function (data, lev = NULL, model = NULL, debug=F)
     stop("levels of observed and predicted data do not match")
 
   Pos = 'Positive'
+  Neg = 'Negative'
   
   rocObject <- try(pROC::roc(obs, data[, Pos]), silent = TRUE)
   rocAUC <- if(class(rocObject)[1] == "try-error") NA else rocObject$auc
   
-  precision = posPredValue(pred, obs, positive=Pos)
-  recall    = sensitivity( pred, obs, positive=Pos)
-  #specifity = specificity( pred, obs, positive=Pos)
+  pos_precision = posPredValue(pred, obs, positive=Pos)
+  pos_recall    = sensitivity( pred, obs, positive=Pos)
+  pos_f1 = 2 * pos_precision * pos_recall / (pos_precision + pos_recall)
+  
+  neg_precision = negPredValue(pred, obs, negative=Neg)
+  neg_recall    = specificity( pred, obs, positive=Pos)
+  neg_f1 = 2 * neg_precision * neg_recall / (neg_precision + neg_recall)
   
   #cMat = confusionMatrix(pred, obs), positive=Pos)
   #pos  = cMat$postitive
@@ -141,10 +146,7 @@ iClassSummary = function (data, lev = NULL, model = NULL, debug=F)
   #precision  = row['Pos Pred Value']
   #recall     = row['Sensitivity']
   
-  
-  f1 = 2 * precision * recall / (precision + recall)
-  
-  out <- c(rocAUC, precision, recall, f1)
-  names(out) <- c("ROC", "Precision", "Recall","F1")
+  out <- c(rocAUC, pos_precision, pos_recall, pos_f1, neg_precision, neg_recall, neg_f1)
+  names(out) <- c("ROC", "PosPrec", "PosRecall","PosF1", "NegPrec", "NegRecall","NegF1")
   return(out)
 }

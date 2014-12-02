@@ -41,10 +41,7 @@ Predict = function(X,Y, algorithm, nCV, ...){
     ,y = YTrain
     ,method = algorithm
     ,trControl = ctrl
-    #,...
-    ,preProc = c("center", "scale")
-    ,metric = 'ROC'
-    ,tuneLength = 10
+    ,...
   )
   
   pred = predict.train(fit, XTest) #, type = 'prob'

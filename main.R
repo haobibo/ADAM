@@ -7,31 +7,31 @@ data.set = list(
   ,list(data_file = "TimeSequence_all_features.csv", XBegin = 50, YBegin = 3, YEnd   = 24)  #2
   ,list(data_file = "data-suicide.csv",              XBegin = 6,  YBegin = 1, YEnd   = 5 )  #3
   ,list(data_file = "/evaluation/ds01.csv",          XBegin = 2,  YBegin = 1, YEnd   = 1 )  #4
-)[[4]]
+)[[3]]
 
 predict_source = c(
    'train.regress.R'          #1
   ,'train.class.R'            #2
   ,'train.class.exp1.R'       #3
   ,'train.class.exp2.R'       #4
-)[2]
+)[3]
 
 demo_source = c('output.tex.R')
 
 .preprocess = list(
    SelectX      = list('all')
   ,DiscreteX    = list('no')
-  ,ReduceDimX   = list('no','PCA_0.8','SVD_2')[1:1]
-  ,StandardizeY = list('no', 'scale')[1:1]
-  ,GroupingY    = list('no','factor','bifactor','High~Rest','High~Low')[3:3]
-  ,SamplingY    = list('no','downSample', 'upSample' )[1:1]
+  ,ReduceDimX   = list('no','PCA_0.8','SVD_2')[1:2]
+  ,StandardizeY = list('no', 'scale')[2:2]
+  ,GroupingY    = list('no','factor','bifactor','High~Rest','High~Low')[4:5]
+  ,SamplingY    = list('no','downSample', 'upSample' )[1:2]
 )
 
 .run.model = list(
     algorithms   = list('forward','both','lm', 'lmStepAIC','rlm', 'lasso', 'earth',
                        'J48','bayesglm', 'LogitBoost',
-                       'svmRadial','rf')[c(11)]
-   ,nCVs         = list(10)# ,10)
+                       'svmRadial','rf')[c(11,12)]
+   ,nCVs         = list(5)# ,10)
    
    #-------------- Following arguments will be passed to caret train function directly
    #,preProc = c("center", "scale")
@@ -60,7 +60,7 @@ XNames <<- DNames[XBegin:XEnd]
 
 X = df[XNames]
 Y = df[YNames]
-  
+
 ##################### Here begins the main part of program
 setwd(twd)
 
