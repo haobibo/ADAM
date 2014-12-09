@@ -1,4 +1,10 @@
-Predict = function(X,Y, algorithm, nCV, ...){
+#############################################################################
+##In This experiment:
+# 1. on test set: H~R (middle score group are set to negative)
+# 2. on training set: H~R, but do downsample
+# 3. only when sampling=H~R is meaningful, H~L or testing is not meaningful
+
+Predict = function(X, Y, sampling, algorithm, nCV, ...){
   
   training  = createDataPartition(Y, p=0.8)[[1]]   #train data samples
   testing   = (1:length(Y))[-training]             #test  data samples
@@ -19,6 +25,8 @@ Predict = function(X,Y, algorithm, nCV, ...){
       YTest = factor(YTest)
     }
   }
+  training = intersect(sampling, training)
+  
   XTrain  = X[training,]              #Select all the training part
   YTrain  = factor( Y[training] )
   
@@ -29,7 +37,7 @@ Predict = function(X,Y, algorithm, nCV, ...){
     ,returnResamp = "all"
     ,classProbs = TRUE
     ,savePred = TRUE
-    ,summaryFunction =iClassSummary # iClassSummary2#, twoClassSummary, defaultSummary
+    ,summaryFunction =iClassSummary
     ,allowParallel = accelerateInsideTraining
   )
   

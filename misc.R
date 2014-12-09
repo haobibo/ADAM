@@ -99,24 +99,39 @@ grouping.std = function(d, cutOffScore = NULL, to.factor=T){
   return (r)
 }
 
-discrete = function(grouping, x, cutOffScore=NULL, to.factor=T){
-  if(grouping=='High~Rest'){
-    return (discrete.cutoff(x, cutOffScore, to.factor))
-  }else if(grouping=='High~Low'){
-    return (discrete.std(x, cutOffScore, to.factor))
-  }else{
-	  stop('Unknown grouping method! ')
-  }
+transform.order = function(x,decrease = FALSE){
+  r = lapply(x, function(i){
+    j = order(i,decreasing = decrease)
+    return(j)
+  })
+  return(data.frame(r))
 }
 
+transform.quantile = function(x,groups=5,decrease=FALSE){
+  r = lapply(x, function(i){
+    unit = length(i) / groups
+    j = order(i,decreasing = decrease) - 1
+    k = j%/%unit + 1
+    return( as.numeric(k) )
+  })
+  return(data.frame(r))
+}
 
+transform.quantile.factor = function(x, groups=5, decrease=FALSE){
+  r = lapply(x, function(i){
+    unit = length(i) / groups
+    j = order(i,decreasing = decrease) - 1
+    k = j%/%unit + 1
+    return( factor(k) )
+  })
+  return(data.frame(r))
+}
 
 #summary function
 iClassSummary = function (data, lev = NULL, model = NULL, debug=F) 
 {
-  pred = data$pred  #data[, "pred"]
-  obs  = data$obs   #data[, "obs"]
-  
+  pred = data$pred
+  obs  = data$obs
   
   if (!all(levels(pred) == levels(obs))) 
     stop("levels of observed and predicted data do not match")
@@ -127,26 +142,38 @@ iClassSummary = function (data, lev = NULL, model = NULL, debug=F)
   rocObject <- try(pROC::roc(obs, data[, Pos]), silent = TRUE)
   rocAUC <- if(class(rocObject)[1] == "try-error") NA else rocObject$auc
   
-  pos_precision = posPredValue(pred, obs, positive=Pos)
+  #recall
   pos_recall    = sensitivity( pred, obs, positive=Pos)
-  pos_f1 = 2 * pos_precision * pos_recall / (pos_precision + pos_recall)
+  neg_recall    = specificity( pred, obs, negative=Neg)
   
+  #precision
+  pos_precision = posPredValue(pred, obs, positive=Pos)
   neg_precision = negPredValue(pred, obs, negative=Neg)
-  neg_recall    = specificity( pred, obs, positive=Pos)
+
+  #F1
+  pos_f1 = 2 * pos_precision * pos_recall / (pos_precision + pos_recall)
   neg_f1 = 2 * neg_precision * neg_recall / (neg_precision + neg_recall)
-  
-  #cMat = confusionMatrix(pred, obs), positive=Pos)
-  #pos  = cMat$postitive
-  #if(is.null(pos) || pos != "Positive") stop('Positive class is not set properly!')
-  
-  # For binary classification: tab will be only one line
-  # While for multi class classification, there will be multi lines in tab
-  #tab  = cMat$byClass
-  #row = ifelse( (nrow(tab)>1), tab['Class: Positive',], tab)
-  #precision  = row['Pos Pred Value']
-  #recall     = row['Sensitivity']
   
   out <- c(rocAUC, pos_precision, pos_recall, pos_f1, neg_precision, neg_recall, neg_f1)
   names(out) <- c("ROC", "PosPrec", "PosRecall","PosF1", "NegPrec", "NegRecall","NegF1")
+  return(out)
+}
+
+
+#summary function for regression
+iRegressSummary = function(data,lev = NULL, model = NULL){
+  pred = data$pred
+  obs  = data$obs
+  
+  tmp = sum( (pred-obs)^2 ) / sum( (obs - mean(obs))^2  )
+  
+  out = c(
+    sqrt( mean( (obs - pred)^2 ) ),    #RMSE
+    mean( abs(obs - pred)  ),          #MAE
+    abs( cor(pred,obs) ),              #PCC
+    1 - tmp,                                                      #R-Squared
+    1 - tmp * (length(obs)-1) / (length(obs) - 1 - length(obs))   #Adj.R-Squared
+  )
+  names(out) <- c('RMSE','MAE','PCC','RSq','AdjRSq')
   return(out)
 }

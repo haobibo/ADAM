@@ -1,9 +1,11 @@
-Predict = function(X,Y,algorithm, nCV, ...){
+Predict = function(X, Y, sampling, algorithm, nCV, ...){
   
-  keep = Y!=0             # First: select training data.
-  X = X[keep,]            # Second: anandon the middle group, keep High and Low Score.
-  Y = Y[keep]
-  Y = factor( Y )
+  x = X[sampling,]
+  y = Y[sampling]
+  
+  keep = y!=0             # First: select training data.
+  X = x[keep,]            # Second: anandon the middle group, keep High and Low Score.
+  Y = factor( y[keep] )
 
   ctrl = trainControl(
      method = "cv"
@@ -11,7 +13,7 @@ Predict = function(X,Y,algorithm, nCV, ...){
     ,returnResamp = "all"
     ,classProbs = TRUE
     ,savePred = TRUE
-    ,summaryFunction = iClassSummary  #defaultSummary
+    ,summaryFunction = iClassSummary
     ,allowParallel = accelerateInsideTraining
   )
   

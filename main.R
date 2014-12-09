@@ -6,36 +6,35 @@ data.set = list(
    list(data_file = "mini-data.csv",                 XBegin = 12, YBegin = 2, YEnd   = 11)  #1
   ,list(data_file = "TimeSequence_all_features.csv", XBegin = 50, YBegin = 3, YEnd   = 24)  #2
   ,list(data_file = "data-suicide.csv",              XBegin = 6,  YBegin = 1, YEnd   = 5 )  #3
-  ,list(data_file = "/evaluation/ds01.csv",          XBegin = 2,  YBegin = 1, YEnd   = 1 )  #4
+  ,list(data_file = "data-SWB.csv",                  XBegin = 13, YBegin = 2, YEnd   = 12)  #4
 )[[3]]
 
 predict_source = c(
-   'train.regress.R'          #1
-  ,'train.class.R'            #2
-  ,'train.class.exp1.R'       #3
-  ,'train.class.exp2.R'       #4
-)[3]
+   'train.regress.R'                                      #1
+  ,'train.class.R'                                        #2
+  ,'train.class.exp1.R' #Tr=H~R,DownSample;  Test:H~R     #3
+  ,'train.class.exp2.R' #Tr=H~L,no sample ;  Test:H~R     #4
+)[1]
 
 demo_source = c('output.tex.R')
 
 .preprocess = list(
    SelectX      = list('all')
-  ,DiscreteX    = list('no')
-  ,ReduceDimX   = list('no','PCA_0.8','SVD_2')[1:2]
+  ,DiscreteX    = list('no', 'order', 'quantile','quantile.factor')[4:4]
+  ,ReduceDimX   = list('no', 'PCA_0.8', 'SVD_2')[1:1]
   ,StandardizeY = list('no', 'scale')[2:2]
-  ,GroupingY    = list('no','factor','bifactor','High~Rest','High~Low')[4:5]
-  ,SamplingY    = list('no','downSample', 'upSample' )[1:2]
+  ,GroupingY    = list('no', 'factor', 'bifactor', 'High~Rest', 'High~Low')[1:1]
+  ,SamplingY    = list('no', 'downSample', 'upSample' )[1:1]
 )
 
 .run.model = list(
-    algorithms   = list('forward','both','lm', 'lmStepAIC','rlm', 'lasso', 'earth',
-                       'J48','bayesglm', 'LogitBoost',
-                       'svmRadial','rf')[c(11,12)]
+    algorithms   = list('lmStepAIC','lm','rlm', 'lasso', 'earth',
+                       'J48','bayesglm', 'LogitBoost','svmRadial','rf')[c(10)] #4,5,9,
    ,nCVs         = list(5)# ,10)
    
    #-------------- Following arguments will be passed to caret train function directly
    #,preProc = c("center", "scale")
-   ,metric = 'ROC'
+   ,metric = c('ROC','PCC')[2]
    ,tuneLength = 10
    #--------------
 )
@@ -99,7 +98,7 @@ time$runmodel = system.time({
 })[3]
 
 time$output = system.time({
-  fname = sprintf('result_%s.tex',  format(Sys.time(), "%Y%m%d_%H%M%S"))
+  fname = sprintf('result[%s]%s.tex', predict_source, format(Sys.time(), "%Y%m%d_%H%M%S"))
   info   = do.call(output, list(result=result, output.file=fname))
 })[3]
 

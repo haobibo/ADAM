@@ -6,7 +6,37 @@ f.selectX <- function(X, selectX){            ####### select X
 }
 
 f.discreteX <- function(X, discreteX){        ####### discrete X
-  (X)
+  if(discreteX=='no'){           ###################### no preprocess: just return X as it is
+    return (X)
+  }
+  
+  args   = unlist(  strsplit(discreteX, '_')  ) ## reduceDimX should follow reg of quantile_5 / order
+  #print(args)
+  
+  discrete = args[1]     # should be one of [order, quantile]
+  if(discrete == 'order'){           ###################### transform X to order
+    r = transform.order(X)
+    (r)
+  }else if(discrete == 'quantile'){  ###################### discreete X to N groups
+    if(length(args)>1){
+      groups = as.integer( args[2] )        # quantile_5 quantile_7 ...
+      r = transform.quantile( X , groups )
+    }else{
+      r = transform.quantile( X )
+    }
+    (as.data.frame(r))
+  }else if(discrete == 'quantile.factor'){
+    if(length(args)>1){
+      groups = as.integer( args[2] )        # quantile_5 quantile_7 ...
+      r = transform.quantile.factor( X , groups )
+    }else{
+      r = transform.quantile.factor(X)
+    }
+    (as.data.frame(r))
+  }
+  else{
+    stop('Unknow data preprocess optinos!')
+  }
 }
 
 f.reduceDimX <- function(X, reduceDimX){
@@ -17,7 +47,7 @@ f.reduceDimX <- function(X, reduceDimX){
   args   = unlist(  strsplit(reduceDimX, '_')  ) ## reduceDimX should follow reg of PCA_0.8 / SVD_100
   #print(args)
   
-  reduce = args[1]     # should be one of [PCA, SVD]
+  reduce = args[1]           #### should be one of [PCA, SVD]
   if(reduce == 'PCA'){       ###################### do PCA to X
     PCA.ratio = as.double( args[2] )       # PCA_0.8 PCA_0.9 ...
     
@@ -183,15 +213,12 @@ run.model = function(ENV, data, algorithms, nCVs, output.file=NULL, ...){
       idx = d$idx
       
       YNames = names(YY)
-      cat('Total Dim Number = ', length(YNames) ,'\n')
       
       result = NULL
       result = lapply(YNames,  function(YName){
-        sampling = unlist( idx[YName] )
-        x = XX[sampling,]
-        y = YY[sampling,YName]
+        sampleIdx = unlist( idx[YName] )
         
-        r = do.call('Predict', c(list(X=x,Y=y), h, list(GroupingY=GroupingY), list(...)) )
+        r = do.call('Predict', c(list(X=XX, Y=YY[,YName], sampling=sampleIdx), h, list(GroupingY=GroupingY), list(...)) )
         result = if(is.null(result))  r  else  rbind(result,r)
         
         if(nrow(result)>1)
